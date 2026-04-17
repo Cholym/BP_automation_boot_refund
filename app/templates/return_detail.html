@@ -1,0 +1,306 @@
+<!-- 
+Файл: return_detail.html
+Описание: Детальная страница просмотра возврата
+Автор: Чабанова О.В.
+Группа: ПИБД-2206в
+-->
+
+{% extends "base.html" %}
+
+{% block title %}Возврат #{{ return_obj.id }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Навигация -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('main.dashboard') }}">Панель управления</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('main.return_list') }}">Возвраты</a>
+            </li>
+            <li class="breadcrumb-item active">Заявка #{{ return_obj.id }}</li>
+        </ol>
+    </nav>
+
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            Заявка на возврат #{{ return_obj.id }}
+        </h1>
+        <div>
+            {% if return_obj.status == 'new' %}
+                <span class="badge bg-warning text-dark fs-6">
+                    <i class="bi bi-clock"></i> Новая заявка
+                </span>
+            {% elif return_obj.status == 'approved' %}
+                <span class="badge bg-success fs-6">
+                    <i class="bi bi-check-circle"></i> Согласовано
+                </span>
+            {% elif return_obj.status == 'rejected' %}
+                <span class="badge bg-danger fs-6">
+                    <i class="bi bi-x-circle"></i> Отклонено
+                </span>
+            {% else %}
+                <span class="badge bg-secondary fs-6">
+                    <i class="bi bi-check-lg"></i> {{ return_obj.get_status_label() }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Основная информация -->
+        <div class="col-lg-8">
+            <!-- Информация о покупке -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-receipt"></i> Информация о покупке
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">№ Чека/Заказа</label>
+                            <p class="mb-0 fw-bold">{{ return_obj.order_id }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Дата создания заявки</label>
+                            <p class="mb-0">{{ return_obj.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Информация о клиенте -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person"></i> Информация о клиенте
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">ФИО</label>
+                            <p class="mb-0">{{ return_obj.customer_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Телефон</label>
+                            <p class="mb-0">{{ return_obj.customer_phone or 'Не указан' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Информация о товаре -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box"></i> Информация о товаре
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="text-muted small">Наименование</label>
+                            <p class="mb-0 fw-bold">{{ return_obj.product_name }}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="text-muted small">Артикул</label>
+                            <p class="mb-0">{{ return_obj.product_article or 'Не указан' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Сумма возврата</label>
+                            <p class="mb-0 h4 text-success">
+                                {{ "%.2f"|format(return_obj.amount) }} ₽
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Причина возврата -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-left-text"></i> Причина возврата
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ return_obj.reason }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель с действиями -->
+        <div class="col-lg-4">
+            <!-- Статус и маршрут -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Статус обработки</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">Текущий статус</label>
+                        <p class="mb-0">{{ return_obj.get_status_label() }}</p>
+                    </div>
+                    {% if return_obj.processed_by %}
+                    <div class="mb-3">
+                        <label class="text-muted small">Обработал</label>
+                        <p class="mb-0">User ID: {{ return_obj.processed_by }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <label class="text-muted small">Синхронизация с 1С</label>
+                        <p class="mb-0">
+                            {% if return_obj.one_c_sync %}
+                                <span class="text-success">
+                                    <i class="bi bi-check-circle"></i> Синхронизировано
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Не синхронизировано</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопки действий (если есть права) -->
+            {% if can_approve and return_obj.status == 'new' %}
+            <div class="card mb-4 shadow-sm border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Действия</h5>
+                </div>
+                <div class="card-body">
+                    <form id="approvalForm">
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Комментарий</label>
+                            <textarea class="form-control" id="comment" rows="2" 
+                                      placeholder="Необязательно"></textarea>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success" 
+                                    onclick="approveReturn('full')">
+                                <i class="bi bi-check-lg"></i> Согласовать полный возврат
+                            </button>
+                            <button type="button" class="btn btn-warning" 
+                                    onclick="approveReturn('partial')">
+                                <i class="bi bi-cash-coin"></i> Частичный возврат
+                            </button>
+                            <button type="button" class="btn btn-danger" 
+                                    onclick="rejectReturn()">
+                                <i class="bi bi-x-lg"></i> Отклонить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% elif not can_approve and return_obj.status == 'new' %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> 
+                <small>У вас нет прав для согласования этого возврата 
+                (сумма превышает 10 000 ₽). Обратитесь к менеджеру.</small>
+            </div>
+            {% endif %}
+
+            <!-- История изменений -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">История</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2">
+                            <i class="bi bi-plus-circle text-success"></i>
+                            <strong>Создана заявка</strong>
+                            <br><span class="text-muted">
+                                {{ return_obj.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            </span>
+                        </li>
+                        {% if return_obj.updated_at != return_obj.created_at %}
+                        <li>
+                            <i class="bi bi-pencil text-primary"></i>
+                            <strong>Обновлено</strong>
+                            <br><span class="text-muted">
+                                {{ return_obj.updated_at.strftime('%d.%m.%Y %H:%M') }}
+                            </span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Функция согласования возврата
+function approveReturn(type) {
+    const comment = document.getElementById('comment').value;
+    const returnId = {{ return_obj.id }};
+    
+    if (confirm('Подтвердить возврат?')) {
+        fetch(`/api/returns/${returnId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: type,
+                comment: comment
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert('Возврат согласован!');
+                location.reload();
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при согласовании');
+        });
+    }
+}
+
+// Функция отклонения возврата
+function rejectReturn() {
+    const comment = document.getElementById('comment').value;
+    const returnId = {{ return_obj.id }};
+    
+    if (!comment) {
+        alert('Пожалуйста, укажите причину отклонения');
+        return;
+    }
+    
+    if (confirm('Отклонить возврат?')) {
+        fetch(`/api/returns/${returnId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reason: comment })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert('Возврат отклонен');
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка');
+        });
+    }
+}
+</script>
+{% endblock %}

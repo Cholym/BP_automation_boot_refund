@@ -1,0 +1,173 @@
+<!-- 
+Файл: dashboard.html
+Описание: Главная панель управления системой возвратов
+Автор: Чабанова О.В.
+Группа: ПИБД-2206в
+Версия: 1.0
+-->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления возвратами | Панель управления</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+          rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light">
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
+                ↩️ Система возвратов
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="nav-item nav-link text-light">
+                    {{ current_user.username }} ({{ current_user.role }})
+                </span>
+                <a class="nav-link" href="{{ url_for('main.logout') }}">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Заголовок -->
+        <h1 class="h3 mb-4">Панель управления возвратами</h1>
+
+        <!-- Карточки статистики -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Всего возвратов</h5>
+                        <h2 class="display-4">{{ stats.total }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Новые заявки</h5>
+                        <h2 class="display-4">{{ stats.new }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Согласовано</h5>
+                        <h2 class="display-4">{{ stats.approved }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Отклонено</h5>
+                        <h2 class="display-4">{{ stats.rejected }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Дополнительные метрики -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Общая сумма возвратов</h5>
+                        <p class="display-6 text-success">
+                            {{ "%.2f"|format(stats.total_amount) }} ₽
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Средняя сумма возврата</h5>
+                        <p class="display-6 text-info">
+                            {{ "%.2f"|format(stats.avg_amount) }} ₽
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="mb-4">
+            <a href="{{ url_for('main.create_return') }}" 
+               class="btn btn-primary btn-lg">
+                ➕ Создать заявку на возврат
+            </a>
+            <a href="{{ url_for('main.return_list') }}" 
+               class="btn btn-outline-secondary btn-lg ms-2">
+                📋 Все возвраты
+            </a>
+        </div>
+
+        <!-- Последние заявки -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Последние заявки</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>№ Чека</th>
+                                <th>Клиент</th>
+                                <th>Товар</th>
+                                <th>Сумма</th>
+                                <th>Статус</th>
+                                <th>Дата</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for return_obj in returns %}
+                            <tr>
+                                <td>{{ return_obj.id }}</td>
+                                <td>{{ return_obj.order_id }}</td>
+                                <td>{{ return_obj.customer_name }}</td>
+                                <td>{{ return_obj.product_name }}</td>
+                                <td>{{ "%.2f"|format(return_obj.amount) }} ₽</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if return_obj.status == 'new' %}bg-warning
+                                        {% elif return_obj.status == 'approved' %}bg-success
+                                        {% elif return_obj.status == 'rejected' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ return_obj.get_status_label() }}
+                                    </span>
+                                </td>
+                                <td>{{ return_obj.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('main.return_detail', id=return_obj.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        Подробнее
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">
+                                    Нет заявок на возврат
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

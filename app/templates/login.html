@@ -1,0 +1,77 @@
+<!-- 
+Файл: login.html
+Описание: Страница авторизации пользователя
+Автор: Чабанова О.В.
+Группа: ПИБД-2206в
+-->
+
+{% extends "base.html" %}
+
+{% block title %}Вход в систему{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <!-- Логотип/Заголовок -->
+                    <div class="text-center mb-4">
+                        <i class="bi bi-arrow-counterclockwise text-primary" 
+                           style="font-size: 3rem;"></i>
+                        <h2 class="mt-3 mb-1">Система возвратов</h2>
+                        <p class="text-muted">Магазин спортивной одежды</p>
+                    </div>
+
+                    <!-- Сообщение об ошибке -->
+                    {% if error %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+
+                    <!-- Форма входа -->
+                    <form method="POST" action="{{ url_for('main.login') }}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="bi bi-person"></i> Имя пользователя
+                            </label>
+                            <input type="text" class="form-control form-control-lg" 
+                                   id="username" name="username" 
+                                   placeholder="Введите логин" required autofocus>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> Пароль
+                            </label>
+                            <input type="password" class="form-control form-control-lg" 
+                                   id="password" name="password" 
+                                   placeholder="Введите пароль" required>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Войти
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Демо-доступ (для тестирования) -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <small class="text-muted d-block mb-2">
+                            <i class="bi bi-info-circle"></i> Демо-доступ:
+                        </small>
+                        <ul class="list-unstyled mb-0 small">
+                            <li><strong>admin</strong> / admin123 (Администратор)</li>
+                            <li><strong>seller</strong> / seller123 (Продавец)</li>
+                            <li><strong>senior</strong> / senior123 (Ст. продавец)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
