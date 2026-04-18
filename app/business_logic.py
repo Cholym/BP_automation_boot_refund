@@ -127,9 +127,7 @@ class ReturnBusinessLogic:
         
         Возвращает:
             dict: Индикаторы риска
-        """
-        from datetime import datetime, timedelta
-        
+        """        
         cutoff_date = datetime.utcnow() - timedelta(days=days_window)
         
         # Количество возвратов от клиента за период

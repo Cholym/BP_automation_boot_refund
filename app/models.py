@@ -9,13 +9,14 @@
 """
 
 from datetime import datetime
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     """
     Класс: User
     Описание: Модель пользователя системы (продавец, старший продавец, менеджер)
@@ -77,7 +78,7 @@ class User(db.Model):
         Возвращает:
             bool: True если пользователь может согласовать, иначе False
         """
-        if self.role == 'manager':
+        if self.role in ('manager', 'admin'):
             return True
         elif self.role == 'senior_seller' and amount <= 10000:
             return True

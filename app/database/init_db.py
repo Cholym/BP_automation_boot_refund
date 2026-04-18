@@ -6,15 +6,16 @@
 Группа: ПИБД-2206в
 """
 
-import sys
 import os
+import sys
 
-# Добавляем корневую директорию в path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Добавляем корневую директорию проекта в path
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
-from app import create_app, db
-from app.models import User
-from werkzeug.security import generate_password_hash
+from app import create_app
+from app.models import User, db
 
 
 def init_database():
@@ -23,63 +24,63 @@ def init_database():
     Описание: Создание всех таблиц и начальных данных
     """
     app = create_app()
-    
+
     with app.app_context():
         # Создание всех таблиц
         print("Создание таблиц базы данных...")
         db.create_all()
         print("✓ Таблицы созданы")
-        
+
         # Проверка наличия администратора
-        admin = User.query.filter_by(username='admin').first()
+        admin = User.query.filter_by(username="admin").first()
         if not admin:
             print("Создание тестовых пользователей...")
-            
+
             # Создание администратора
             admin = User(
-                username='admin',
-                email='admin@store.ru',
-                role='admin',
-                is_active=True
+                username="admin",
+                email="admin@store.ru",
+                role="admin",
+                is_active=True,
             )
-            admin.set_password('admin123')
+            admin.set_password("admin123")
             db.session.add(admin)
-            
+
             # Создание продавца
             seller = User(
-                username='seller',
-                email='seller@store.ru',
-                role='seller',
-                is_active=True
+                username="seller",
+                email="seller@store.ru",
+                role="seller",
+                is_active=True,
             )
-            seller.set_password('seller123')
+            seller.set_password("seller123")
             db.session.add(seller)
-            
+
             # Создание старшего продавца
             senior = User(
-                username='senior',
-                email='senior@store.ru',
-                role='senior_seller',
-                is_active=True
+                username="senior",
+                email="senior@store.ru",
+                role="senior_seller",
+                is_active=True,
             )
-            senior.set_password('senior123')
+            senior.set_password("senior123")
             db.session.add(senior)
-            
+
             # Создание менеджера
             manager = User(
-                username='manager',
-                email='manager@store.ru',
-                role='manager',
-                is_active=True
+                username="manager",
+                email="manager@store.ru",
+                role="manager",
+                is_active=True,
             )
-            manager.set_password('manager123')
+            manager.set_password("manager123")
             db.session.add(manager)
-            
+
             db.session.commit()
             print("✓ Тестовые пользователи созданы")
         else:
             print("ℹ Пользователи уже существуют")
-        
+
         print("\nБаза данных успешно инициализирована!")
         print("\nТестовые учетные данные:")
         print("  admin / admin123")
@@ -88,5 +89,5 @@ def init_database():
         print("  manager / manager123")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_database()
