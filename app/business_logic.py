@@ -17,13 +17,13 @@ class ReturnBusinessLogic:
     Описание: Реализация бизнес-правил обработки возвратов
     
     Бизнес-правила:
-        1. Возврат ≤ 10 000 ₽ может согласовать старший продавец
-        2. Возврат > 10 000 ₽ требует согласования менеджера
+        1. Возврат ≤ 500 ₽ согласуется автоматически после создания заявки
+        2. Ручное согласование — только менеджер (сумма > 500 ₽)
         3. Возврат возможен в течение 14 дней с момента покупки
         4. Товар должен сохранить товарный вид
     """
     
-    MAX_AMOUNT_SENIOR_SELLER = 10000  # Максимальная сумма для старшего продавца
+    AUTO_APPROVE_MAX_AMOUNT = 500  # Автовозврат без ручного согласования
     RETURN_PERIOD_DAYS = 14  # Период возврата в днях
     
     @staticmethod
@@ -57,12 +57,24 @@ class ReturnBusinessLogic:
             amount (float): Сумма возврата
         
         Возвращает:
-            str: Роль ответственного за согласование
+            str: 'auto' или ответственная роль для ручного согласования
         """
-        if amount <= ReturnBusinessLogic.MAX_AMOUNT_SENIOR_SELLER:
-            return 'senior_seller'
-        else:
-            return 'manager'
+        if amount <= ReturnBusinessLogic.AUTO_APPROVE_MAX_AMOUNT:
+            return 'auto'
+        return 'manager'
+
+    @staticmethod
+    def try_auto_approve(return_obj, submitted_by_user_id):
+        """
+        Автоматическое согласование при сумме не выше AUTO_APPROVE_MAX_AMOUNT.
+
+        Возвращает True, если статус выставлен в «согласовано».
+        """
+        if return_obj.amount <= ReturnBusinessLogic.AUTO_APPROVE_MAX_AMOUNT:
+            return_obj.status = Return.STATUS_APPROVED
+            return_obj.processed_by = submitted_by_user_id
+            return True
+        return False
     
     @staticmethod
     def calculate_refund_amount(return_obj, deduction_percent=0):

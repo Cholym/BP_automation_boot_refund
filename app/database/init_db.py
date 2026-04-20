@@ -56,16 +56,6 @@ def init_database():
             seller.set_password("seller123")
             db.session.add(seller)
 
-            # Создание старшего продавца
-            senior = User(
-                username="senior",
-                email="senior@store.ru",
-                role="senior_seller",
-                is_active=True,
-            )
-            senior.set_password("senior123")
-            db.session.add(senior)
-
             # Создание менеджера
             manager = User(
                 username="manager",
@@ -85,7 +75,6 @@ def init_database():
         print("\nТестовые учетные данные:")
         print("  admin / admin123")
         print("  seller / seller123")
-        print("  senior / senior123")
         print("  manager / manager123")
 
 

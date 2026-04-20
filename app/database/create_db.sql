@@ -104,12 +104,11 @@ CREATE INDEX idx_audit_log_created_at ON audit_log(created_at);
 -- Пароли (хэши) для тестовых пользователей:
 -- admin: admin123 (хэш нужно сгенерировать через Werkzeug)
 -- seller: seller123
--- senior: senior123
+-- manager: manager123
 
 INSERT INTO users (username, email, password_hash, role, is_active) VALUES
 ('admin', 'admin@store.ru', 'pbkdf2:sha256:260000$...', 'admin', 1),
 ('seller', 'seller@store.ru', 'pbkdf2:sha256:260000$...', 'seller', 1),
-('senior', 'senior@store.ru', 'pbkdf2:sha256:260000$...', 'senior_seller', 1),
 ('manager', 'manager@store.ru', 'pbkdf2:sha256:260000$...', 'manager', 1);
 
 -- Тестовые возвраты

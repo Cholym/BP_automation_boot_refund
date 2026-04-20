@@ -19,14 +19,14 @@ db = SQLAlchemy()
 class User(UserMixin, db.Model):
     """
     Класс: User
-    Описание: Модель пользователя системы (продавец, старший продавец, менеджер)
+        Описание: Модель пользователя системы (продавец, менеджер и др.)
     
     Атрибуты:
         id (int): Уникальный идентификатор пользователя
         username (str): Имя пользователя (логин)
         email (str): Электронная почта
         password_hash (str): Хэш пароля
-        role (str): Роль пользователя ('seller', 'senior_seller', 'manager')
+        role (str): Роль пользователя ('seller', 'senior_seller', 'manager', 'admin')
         created_at (datetime): Дата создания записи
         is_active (bool): Статус активности пользователя
     """
@@ -67,22 +67,14 @@ class User(UserMixin, db.Model):
         """
         return check_password_hash(self.password_hash, password)
     
-    def can_approve_return(self, amount):
+    def can_approve_return(self, _amount=None):
         """
         Метод: can_approve_return
-        Описание: Проверка права на согласование возврата
-        
-        Параметры:
-            amount (float): Сумма возврата
-        
-        Возвращает:
-            bool: True если пользователь может согласовать, иначе False
+        Описание: Согласование доступно менеджеру и администратору
+
+        Параметр _amount оставлен для совместимости с существующими вызовами.
         """
-        if self.role in ('manager', 'admin'):
-            return True
-        elif self.role == 'senior_seller' and amount <= 10000:
-            return True
-        return False
+        return self.role in ('manager', 'admin')
     
     def to_dict(self):
         """Сериализация объекта в словарь"""

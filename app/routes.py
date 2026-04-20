@@ -129,16 +129,14 @@ def create_return():
         # Создание объекта возврата
         new_return = Return(**return_data)
         new_return.status = Return.STATUS_NEW
-        
-        # Определение маршрута согласования
-        approval_route = ReturnBusinessLogic.determine_approval_route(
-            return_data['amount']
-        )
-        
+
+        # Сумма ≤ 500 ₽ — автоматическое согласование без ручного этапа
+        ReturnBusinessLogic.try_auto_approve(new_return, current_user.id)
+
         db.session.add(new_return)
         db.session.commit()
-        
-        # TODO: Отправка уведомления ответственному
+
+        # TODO: Отправка уведомления ответственному при ручном согласовании
         
         return redirect(url_for('main.return_detail', id=new_return.id))
     
@@ -204,9 +202,10 @@ def api_create_return():
         product_article=data.get('product_article'),
         amount=data['amount'],
         reason=data['reason'],
-        status=Return.STATUS_NEW
+        status=Return.STATUS_NEW,
     )
-    
+    ReturnBusinessLogic.try_auto_approve(new_return, current_user.id)
+
     db.session.add(new_return)
     db.session.commit()
     

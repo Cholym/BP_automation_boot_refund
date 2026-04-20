@@ -201,8 +201,7 @@
             {% elif not can_approve and return_obj.status == 'new' %}
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i> 
-                <small>У вас нет прав для согласования этого возврата 
-                (сумма превышает 10 000 ₽). Обратитесь к менеджеру.</small>
+                <small>Согласование доступно только менеджеру. Обратитесь к менеджеру.</small>
             </div>
             {% endif %}
 
