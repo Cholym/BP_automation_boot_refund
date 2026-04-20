@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Модуль: business_logic.py
-Описание: Бизнес-логика обработки возвратов
+Назначение: Бизнес-логика обработки возвратов.
 Автор: Чабанова О.В.
 Группа: ПИБД-2206в
 Дата: 2026
@@ -14,50 +14,46 @@ from app.models import Return, db
 class ReturnBusinessLogic:
     """
     Класс: ReturnBusinessLogic
-    Описание: Реализация бизнес-правил обработки возвратов
-    
-    Бизнес-правила:
-        1. Возврат ≤ 500 ₽ согласуется автоматически после создания заявки
-        2. Ручное согласование — только менеджер (сумма > 500 ₽)
-        3. Возврат возможен в течение 14 дней с момента покупки
-        4. Товар должен сохранить товарный вид
+    Назначение: Реализация бизнес-правил обработки возвратов.
+
+    Правила:
+        1. Возврат ≤ 500 ₽ согласуется автоматически после создания заявки.
+        2. Ручное согласование — только менеджер (сумма > 500 ₽).
+        3. Возврат возможен в течение 14 дней с момента покупки.
+        4. Товар должен сохранить товарный вид.
     """
-    
+
     AUTO_APPROVE_MAX_AMOUNT = 500  # Автовозврат без ручного согласования
     RETURN_PERIOD_DAYS = 14  # Период возврата в днях
-    
+
     @staticmethod
     def validate_return_period(purchase_date):
         """
-        Метод: validate_return_period
-        Описание: Проверка соблюдения срока возврата (14 дней)
-        
+        Функция: validate_return_period
+        Назначение: Проверка соблюдения срока возврата (14 дней).
         Параметры:
-            purchase_date (datetime): Дата покупки
-        
+            purchase_date (datetime): Дата покупки.
         Возвращает:
-            tuple: (bool, str) - результат проверки и сообщение
+            tuple: Результат проверки (bool) и сообщение (str).
         """
         today = datetime.utcnow().date()
         delta = today - purchase_date.date()
-        
+
         if delta.days > ReturnBusinessLogic.RETURN_PERIOD_DAYS:
             return False, f"Превышен срок возврата (прошло {delta.days} дней, \
 максимум {ReturnBusinessLogic.RETURN_PERIOD_DAYS})"
-        
+
         return True, "Срок возврата соблюден"
-    
+
     @staticmethod
     def determine_approval_route(amount):
         """
-        Метод: determine_approval_route
-        Описание: Определение маршрута согласования по сумме
-        
+        Функция: determine_approval_route
+        Назначение: Определение маршрута согласования по сумме.
         Параметры:
-            amount (float): Сумма возврата
-        
+            amount (float): Сумма возврата.
         Возвращает:
-            str: 'auto' или ответственная роль для ручного согласования
+            str: 'auto' или ответственная роль для ручного согласования.
         """
         if amount <= ReturnBusinessLogic.AUTO_APPROVE_MAX_AMOUNT:
             return 'auto'
@@ -66,43 +62,45 @@ class ReturnBusinessLogic:
     @staticmethod
     def try_auto_approve(return_obj, submitted_by_user_id):
         """
-        Автоматическое согласование при сумме не выше AUTO_APPROVE_MAX_AMOUNT.
-
-        Возвращает True, если статус выставлен в «согласовано».
+        Функция: try_auto_approve
+        Назначение: Автоматическое согласование при сумме не выше
+            AUTO_APPROVE_MAX_AMOUNT.
+        Параметры:
+            return_obj (Return): Заявка на возврат.
+            submitted_by_user_id (int): Идентификатор пользователя, создавшего заявку.
+        Возвращает:
+            bool: True, если статус выставлен в «согласовано».
         """
         if return_obj.amount <= ReturnBusinessLogic.AUTO_APPROVE_MAX_AMOUNT:
             return_obj.status = Return.STATUS_APPROVED
             return_obj.processed_by = submitted_by_user_id
             return True
         return False
-    
+
     @staticmethod
     def calculate_refund_amount(return_obj, deduction_percent=0):
         """
-        Метод: calculate_refund_amount
-        Описание: Расчет суммы возврата с учетом удержаний
-        
+        Функция: calculate_refund_amount
+        Назначение: Расчёт суммы возврата с учётом удержаний.
         Параметры:
-            return_obj (Return): Объект возврата
-            deduction_percent (float): Процент удержания (0-100)
-        
+            return_obj (Return): Объект возврата.
+            deduction_percent (float): Процент удержания (0–100).
         Возвращает:
-            float: Сумма к возврату
+            float: Сумма к возврату.
         """
         if deduction_percent < 0 or deduction_percent > 100:
             deduction_percent = 0
-        
+
         deduction = return_obj.amount * (deduction_percent / 100)
         return return_obj.amount - deduction
-    
+
     @staticmethod
     def get_return_statistics():
         """
-        Метод: get_return_statistics
-        Описание: Получение статистики по возвратам
-        
+        Функция: get_return_statistics
+        Назначение: Получение статистики по возвратам.
         Возвращает:
-            dict: Статистика возвратов
+            dict: Статистика возвратов.
         """
         total = Return.query.count()
         new_count = Return.query.filter_by(status=Return.STATUS_NEW).count()
@@ -110,14 +108,14 @@ class ReturnBusinessLogic:
             status=Return.STATUS_APPROVED).count()
         rejected_count = Return.query.filter_by(
             status=Return.STATUS_REJECTED).count()
-        
+
         # Расчет средней суммы возврата
         total_amount = db.session.query(
             db.func.sum(Return.amount)
         ).filter_by(status=Return.STATUS_APPROVED).scalar() or 0
-        
+
         avg_amount = total_amount / approved_count if approved_count > 0 else 0
-        
+
         return {
             'total': total,
             'new': new_count,
@@ -126,34 +124,32 @@ class ReturnBusinessLogic:
             'total_amount': total_amount,
             'avg_amount': avg_amount
         }
-    
+
     @staticmethod
     def check_fraud_indicators(customer_phone, days_window=30):
         """
-        Метод: check_fraud_indicators
-        Описание: Проверка индикаторов мошенничества
-        
+        Функция: check_fraud_indicators
+        Назначение: Проверка индикаторов мошенничества.
         Параметры:
-            customer_phone (str): Телефон клиента
-            days_window (int): Период анализа в днях
-        
+            customer_phone (str): Телефон клиента.
+            days_window (int): Период анализа в днях.
         Возвращает:
-            dict: Индикаторы риска
-        """        
+            dict: Индикаторы риска.
+        """
         cutoff_date = datetime.utcnow() - timedelta(days=days_window)
-        
+
         # Количество возвратов от клиента за период
         returns_count = Return.query.filter(
             Return.customer_phone == customer_phone,
             Return.created_at >= cutoff_date
         ).count()
-        
+
         risk_level = 'low'
         if returns_count >= 5:
             risk_level = 'high'
         elif returns_count >= 3:
             risk_level = 'medium'
-        
+
         return {
             'returns_count': returns_count,
             'risk_level': risk_level,

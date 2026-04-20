@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Модуль: models.py
-Описание: Модели данных для системы автоматизации возвратов
+Назначение: Модели данных для системы автоматизации возвратов.
 Автор: Чабанова О.В.
 Группа: ПИБД-2206в
-Дата создания: 2026
-Версия: 1.0
+Дата: 2026
 """
 
 from datetime import datetime
@@ -19,20 +18,20 @@ db = SQLAlchemy()
 class User(UserMixin, db.Model):
     """
     Класс: User
-        Описание: Модель пользователя системы (продавец, менеджер и др.)
-    
+    Назначение: Модель пользователя системы (продавец, менеджер и др.).
+
     Атрибуты:
-        id (int): Уникальный идентификатор пользователя
-        username (str): Имя пользователя (логин)
-        email (str): Электронная почта
-        password_hash (str): Хэш пароля
-        role (str): Роль пользователя ('seller', 'senior_seller', 'manager', 'admin')
-        created_at (datetime): Дата создания записи
-        is_active (bool): Статус активности пользователя
+        id (int): Уникальный идентификатор пользователя.
+        username (str): Имя пользователя (логин).
+        email (str): Электронная почта.
+        password_hash (str): Хэш пароля.
+        role (str): Роль пользователя ('seller', 'senior_seller', 'manager', 'admin').
+        created_at (datetime): Дата создания записи.
+        is_active (bool): Статус активности пользователя.
     """
-    
+
     __tablename__ = 'users'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -40,44 +39,50 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default='seller')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
-    
+
     # Связь с возвратами (один ко многим)
     returns = db.relationship('Return', backref='processor', lazy=True)
-    
+
     def set_password(self, password):
         """
-        Метод: set_password
-        Описание: Установка хэша пароля
-        
+        Функция: set_password
+        Назначение: Установка хэша пароля.
         Параметры:
-            password (str): Пароль в открытом виде
+            password (str): Пароль в открытом виде.
+        Возвращает:
+            None
         """
         self.password_hash = generate_password_hash(password)
-    
+
     def check_password(self, password):
         """
-        Метод: check_password
-        Описание: Проверка пароля
-        
+        Функция: check_password
+        Назначение: Проверка пароля.
         Параметры:
-            password (str): Пароль для проверки
-        
+            password (str): Пароль для проверки.
         Возвращает:
-            bool: True если пароль верный, иначе False
+            bool: True, если пароль верный, иначе False.
         """
         return check_password_hash(self.password_hash, password)
-    
+
     def can_approve_return(self, _amount=None):
         """
-        Метод: can_approve_return
-        Описание: Согласование доступно менеджеру и администратору
-
-        Параметр _amount оставлен для совместимости с существующими вызовами.
+        Функция: can_approve_return
+        Назначение: Проверка права на согласование возврата (менеджер, администратор).
+        Параметры:
+            _amount: Не используется; оставлен для совместимости вызовов.
+        Возвращает:
+            bool: True, если пользователь может согласовать возврат.
         """
         return self.role in ('manager', 'admin')
-    
+
     def to_dict(self):
-        """Сериализация объекта в словарь"""
+        """
+        Функция: to_dict
+        Назначение: Сериализация объекта в словарь.
+        Возвращает:
+            dict: Поля пользователя для JSON.
+        """
         return {
             'id': self.id,
             'username': self.username,
@@ -90,26 +95,26 @@ class User(UserMixin, db.Model):
 class Return(db.Model):
     """
     Класс: Return
-    Описание: Модель заявки на возврат товара
-    
+    Назначение: Модель заявки на возврат товара.
+
     Атрибуты:
-        id (int): Уникальный идентификатор возврата
-        order_id (str): Номер заказа/чека
-        customer_name (str): ФИО клиента
-        customer_phone (str): Телефон клиента
-        product_name (str): Наименование товара
-        product_article (str): Артикул товара
-        amount (float): Сумма возврата
-        reason (str): Причина возврата
-        status (str): Статус заявки
-        created_at (datetime): Дата создания
-        updated_at (datetime): Дата обновления
-        processed_by (int): ID обработавшего пользователя
-        one_c_sync (bool): Статус синхронизации с 1С
+        id (int): Уникальный идентификатор возврата.
+        order_id (str): Номер заказа/чека.
+        customer_name (str): ФИО клиента.
+        customer_phone (str): Телефон клиента.
+        product_name (str): Наименование товара.
+        product_article (str): Артикул товара.
+        amount (float): Сумма возврата.
+        reason (str): Причина возврата.
+        status (str): Статус заявки.
+        created_at (datetime): Дата создания.
+        updated_at (datetime): Дата обновления.
+        processed_by (int): Идентификатор обработавшего пользователя.
+        one_c_sync (bool): Статус синхронизации с 1С.
     """
-    
+
     __tablename__ = 'returns'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.String(50), nullable=False)
     customer_name = db.Column(db.String(100), nullable=False)
@@ -120,21 +125,26 @@ class Return(db.Model):
     reason = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='new')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, 
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow,
                           onupdate=datetime.utcnow)
     processed_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     one_c_sync = db.Column(db.Boolean, default=False)
     bitrix_deal_id = db.Column(db.String(50))
-    
+
     # Статусы возвратов
     STATUS_NEW = 'new'  # Новая заявка
     STATUS_CHECKING = 'checking'  # На проверке
     STATUS_APPROVED = 'approved'  # Согласовано
     STATUS_REJECTED = 'rejected'  # Отклонено
     STATUS_COMPLETED = 'completed'  # Завершено
-    
+
     def to_dict(self):
-        """Сериализация объекта в словарь"""
+        """
+        Функция: to_dict
+        Назначение: Сериализация объекта в словарь.
+        Возвращает:
+            dict: Поля заявки для JSON.
+        """
         return {
             'id': self.id,
             'order_id': self.order_id,
@@ -150,14 +160,13 @@ class Return(db.Model):
             'processed_by': self.processed_by,
             'one_c_sync': self.one_c_sync
         }
-    
+
     def get_status_label(self):
         """
-        Метод: get_status_label
-        Описание: Получение человеко-читаемого названия статуса
-        
+        Функция: get_status_label
+        Назначение: Получение отображаемого названия статуса.
         Возвращает:
-            str: Название статуса на русском языке
+            str: Название статуса на русском языке.
         """
         labels = {
             'new': 'Новая заявка',
@@ -172,11 +181,20 @@ class Return(db.Model):
 class Product(db.Model):
     """
     Класс: Product
-    Описание: Модель товара (кэш из 1С)
+    Назначение: Модель товара (кэш из 1С).
+
+    Атрибуты:
+        id (int): Уникальный идентификатор.
+        article (str): Артикул.
+        name (str): Наименование.
+        price (float): Цена.
+        quantity (int): Количество.
+        category (str): Категория.
+        last_sync (datetime): Время последней синхронизации.
     """
-    
+
     __tablename__ = 'products'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     article = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(200), nullable=False)
@@ -184,8 +202,14 @@ class Product(db.Model):
     quantity = db.Column(db.Integer, default=0)
     category = db.Column(db.String(100))
     last_sync = db.Column(db.DateTime)
-    
+
     def to_dict(self):
+        """
+        Функция: to_dict
+        Назначение: Сериализация объекта в словарь.
+        Возвращает:
+            dict: Поля товара для JSON.
+        """
         return {
             'id': self.id,
             'article': self.article,
