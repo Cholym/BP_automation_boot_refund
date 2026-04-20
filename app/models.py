@@ -7,7 +7,8 @@
 Дата: 2026
 """
 
-from datetime import datetime
+import json
+from datetime import datetime, date
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -40,7 +41,6 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
 
-    # Связь с возвратами (один ко многим)
     returns = db.relationship('Return', backref='processor', lazy=True)
 
     def set_password(self, password):
@@ -68,13 +68,28 @@ class User(UserMixin, db.Model):
     def can_approve_return(self, _amount=None):
         """
         Функция: can_approve_return
-        Назначение: Проверка права на согласование возврата (менеджер, администратор).
+        Назначение: Проверка права на согласование внутренней заявки (менеджер).
         Параметры:
             _amount: Не используется; оставлен для совместимости вызовов.
         Возвращает:
             bool: True, если пользователь может согласовать возврат.
         """
         return self.role in ('manager', 'admin')
+
+    def can_process_return(self, return_obj):
+        """
+        Функция: can_process_return
+        Назначение: Право одобрить/отклонить заявку с учётом статуса и источника.
+        Параметры:
+            return_obj (Return): Заявка на возврат.
+        Возвращает:
+            bool: True, если доступны действия согласования.
+        """
+        if return_obj.status == Return.STATUS_AWAITING_SELLER:
+            return self.role in ('seller', 'manager', 'admin')
+        if return_obj.status == Return.STATUS_NEW and return_obj.source == Return.SOURCE_STAFF:
+            return self.role in ('manager', 'admin')
+        return False
 
     def to_dict(self):
         """
@@ -92,38 +107,48 @@ class User(UserMixin, db.Model):
         }
 
 
+class Order(db.Model):
+    """
+    Класс: Order
+    Назначение: Заказ для истории продавца и быстрого оформления возврата.
+    """
+
+    __tablename__ = 'orders'
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    customer_name = db.Column(db.String(100), nullable=False)
+    customer_phone = db.Column(db.String(20))
+    customer_email = db.Column(db.String(120))
+    product_name = db.Column(db.String(200), nullable=False)
+    product_article = db.Column(db.String(50))
+    amount = db.Column(db.Float, nullable=False)
+    purchase_date = db.Column(db.Date, nullable=False)
+    order_status = db.Column(db.String(30), default='completed')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Return(db.Model):
     """
     Класс: Return
     Назначение: Модель заявки на возврат товара.
-
-    Атрибуты:
-        id (int): Уникальный идентификатор возврата.
-        order_id (str): Номер заказа/чека.
-        customer_name (str): ФИО клиента.
-        customer_phone (str): Телефон клиента.
-        product_name (str): Наименование товара.
-        product_article (str): Артикул товара.
-        amount (float): Сумма возврата.
-        reason (str): Причина возврата.
-        status (str): Статус заявки.
-        created_at (datetime): Дата создания.
-        updated_at (datetime): Дата обновления.
-        processed_by (int): Идентификатор обработавшего пользователя.
-        one_c_sync (bool): Статус синхронизации с 1С.
     """
 
     __tablename__ = 'returns'
+
+    SOURCE_STAFF = 'staff'
+    SOURCE_CUSTOMER = 'customer'
 
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.String(50), nullable=False)
     customer_name = db.Column(db.String(100), nullable=False)
     customer_phone = db.Column(db.String(20))
+    customer_email = db.Column(db.String(120))
     product_name = db.Column(db.String(200), nullable=False)
     product_article = db.Column(db.String(50))
     amount = db.Column(db.Float, nullable=False)
     reason = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='new')
+    status = db.Column(db.String(30), default='new')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow,
                           onupdate=datetime.utcnow)
@@ -131,12 +156,36 @@ class Return(db.Model):
     one_c_sync = db.Column(db.Boolean, default=False)
     bitrix_deal_id = db.Column(db.String(50))
 
-    # Статусы возвратов
-    STATUS_NEW = 'new'  # Новая заявка
-    STATUS_CHECKING = 'checking'  # На проверке
-    STATUS_APPROVED = 'approved'  # Согласовано
-    STATUS_REJECTED = 'rejected'  # Отклонено
-    STATUS_COMPLETED = 'completed'  # Завершено
+    source = db.Column(db.String(20), default=SOURCE_STAFF, nullable=False)
+    reason_code = db.Column(db.String(50))
+    reason_other = db.Column(db.Text)
+    product_disposition = db.Column(db.String(30))
+    attachment_paths = db.Column(db.Text)
+    rejection_reason_code = db.Column(db.String(50))
+    return_instructions = db.Column(db.Text)
+    purchase_date = db.Column(db.Date)
+
+    STATUS_NEW = 'new'
+    STATUS_CHECKING = 'checking'
+    STATUS_AWAITING_SELLER = 'awaiting_seller'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+    STATUS_COMPLETED = 'completed'
+
+    def get_attachment_list(self):
+        """
+        Функция: get_attachment_list
+        Назначение: Список имён файлов вложений (JSON в attachment_paths).
+        Возвращает:
+            list[str]: Имена файлов.
+        """
+        if not self.attachment_paths:
+            return []
+        try:
+            data = json.loads(self.attachment_paths)
+            return data if isinstance(data, list) else []
+        except (json.JSONDecodeError, TypeError):
+            return []
 
     def to_dict(self):
         """
@@ -150,15 +199,22 @@ class Return(db.Model):
             'order_id': self.order_id,
             'customer_name': self.customer_name,
             'customer_phone': self.customer_phone,
+            'customer_email': self.customer_email,
             'product_name': self.product_name,
             'product_article': self.product_article,
             'amount': self.amount,
             'reason': self.reason,
             'status': self.status,
+            'source': self.source,
+            'reason_code': self.reason_code,
+            'product_disposition': self.product_disposition,
+            'attachments': self.get_attachment_list(),
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'processed_by': self.processed_by,
-            'one_c_sync': self.one_c_sync
+            'one_c_sync': self.one_c_sync,
+            'rejection_reason_code': self.rejection_reason_code,
+            'return_instructions': self.return_instructions,
         }
 
     def get_status_label(self):
@@ -171,9 +227,10 @@ class Return(db.Model):
         labels = {
             'new': 'Новая заявка',
             'checking': 'На проверке',
-            'approved': 'Согласовано',
-            'rejected': 'Отклонено',
-            'completed': 'Завершено'
+            'awaiting_seller': 'Ожидает решения продавца',
+            'approved': 'Одобрен',
+            'rejected': 'Отклонён',
+            'completed': 'Завершено',
         }
         return labels.get(self.status, self.status)
 
@@ -218,3 +275,37 @@ class Product(db.Model):
             'quantity': self.quantity,
             'category': self.category
         }
+
+
+class AuditLog(db.Model):
+    """
+    Класс: AuditLog
+    Назначение: Журнал действий пользователей и системы.
+    """
+
+    __tablename__ = 'audit_log'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    action = db.Column(db.String(80), nullable=False)
+    entity_type = db.Column(db.String(40), nullable=False)
+    entity_id = db.Column(db.Integer, nullable=True)
+    details = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+
+class Notification(db.Model):
+    """
+    Класс: Notification
+    Назначение: Уведомления клиенту/сотрудникам (лог канала; без реальной почты в учебном проекте).
+    """
+
+    __tablename__ = 'notifications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    return_id = db.Column(db.Integer, db.ForeignKey('returns.id'), nullable=True)
+    audience = db.Column(db.String(20), nullable=False)
+    recipient = db.Column(db.String(200), nullable=False)
+    subject = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)

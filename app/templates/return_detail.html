@@ -12,222 +12,154 @@
 
 {% block content %}
 <div class="container">
-    <!-- Навигация -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-                <a href="{{ url_for('main.dashboard') }}">Панель управления</a>
-            </li>
-            <li class="breadcrumb-item">
-                <a href="{{ url_for('main.return_list') }}">Возвраты</a>
-            </li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Панель управления</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.return_list') }}">Возвраты</a></li>
             <li class="breadcrumb-item active">Заявка #{{ return_obj.id }}</li>
         </ol>
     </nav>
 
-    <!-- Заголовок -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">
-            Заявка на возврат #{{ return_obj.id }}
-        </h1>
+        <h1 class="h3 mb-0">Заявка на возврат #{{ return_obj.id }}</h1>
         <div>
             {% if return_obj.status == 'new' %}
-                <span class="badge bg-warning text-dark fs-6">
-                    <i class="bi bi-clock"></i> Новая заявка
-                </span>
+                <span class="badge bg-warning text-dark fs-6"><i class="bi bi-clock"></i> Новая заявка</span>
+            {% elif return_obj.status == 'awaiting_seller' %}
+                <span class="badge bg-info text-dark fs-6"><i class="bi bi-hourglass-split"></i> Ожидает решения продавца</span>
             {% elif return_obj.status == 'approved' %}
-                <span class="badge bg-success fs-6">
-                    <i class="bi bi-check-circle"></i> Согласовано
-                </span>
+                <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> Одобрен</span>
             {% elif return_obj.status == 'rejected' %}
-                <span class="badge bg-danger fs-6">
-                    <i class="bi bi-x-circle"></i> Отклонено
-                </span>
+                <span class="badge bg-danger fs-6"><i class="bi bi-x-circle"></i> Отклонён</span>
             {% else %}
-                <span class="badge bg-secondary fs-6">
-                    <i class="bi bi-check-lg"></i> {{ return_obj.get_status_label() }}
-                </span>
+                <span class="badge bg-secondary fs-6">{{ return_obj.get_status_label() }}</span>
+            {% endif %}
+            {% if return_obj.source == 'customer' %}
+            <span class="badge bg-dark fs-6 ms-1">Клиент</span>
+            {% else %}
+            <span class="badge bg-light text-dark border ms-1">Продавец</span>
             {% endif %}
         </div>
     </div>
 
     <div class="row">
-        <!-- Основная информация -->
         <div class="col-lg-8">
-            <!-- Информация о покупке -->
             <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-receipt"></i> Информация о покупке
-                    </h5>
-                </div>
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-receipt"></i> Покупка</h5></div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="text-muted small">№ Чека/Заказа</label>
-                            <p class="mb-0 fw-bold">{{ return_obj.order_id }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="text-muted small">Дата создания заявки</label>
-                            <p class="mb-0">{{ return_obj.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
-                        </div>
+                        <div class="col-md-6 mb-2"><span class="text-muted small">№ заказа</span><p class="mb-0 fw-bold">{{ return_obj.order_id }}</p></div>
+                        <div class="col-md-6 mb-2"><span class="text-muted small">Дата заявки</span><p class="mb-0">{{ return_obj.created_at.strftime('%d.%m.%Y %H:%M') }}</p></div>
+                        {% if return_obj.purchase_date %}
+                        <div class="col-md-6 mb-2"><span class="text-muted small">Дата покупки</span><p class="mb-0">{{ return_obj.purchase_date.strftime('%d.%m.%Y') }}</p></div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
 
-            <!-- Информация о клиенте -->
             <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-person"></i> Информация о клиенте
-                    </h5>
-                </div>
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-person"></i> Клиент</h5></div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="text-muted small">ФИО</label>
-                            <p class="mb-0">{{ return_obj.customer_name }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="text-muted small">Телефон</label>
-                            <p class="mb-0">{{ return_obj.customer_phone or 'Не указан' }}</p>
-                        </div>
-                    </div>
+                    <p class="mb-1">{{ return_obj.customer_name }}</p>
+                    <p class="mb-0 text-muted">{{ return_obj.customer_phone or '—' }} {% if return_obj.customer_email %}· {{ return_obj.customer_email }}{% endif %}</p>
                 </div>
             </div>
 
-            <!-- Информация о товаре -->
             <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-box"></i> Информация о товаре
-                    </h5>
-                </div>
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-box"></i> Товар</h5></div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8 mb-3">
-                            <label class="text-muted small">Наименование</label>
-                            <p class="mb-0 fw-bold">{{ return_obj.product_name }}</p>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="text-muted small">Артикул</label>
-                            <p class="mb-0">{{ return_obj.product_article or 'Не указан' }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="text-muted small">Сумма возврата</label>
-                            <p class="mb-0 h4 text-success">
-                                {{ "%.2f"|format(return_obj.amount) }} ₽
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Причина возврата -->
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="bi bi-chat-left-text"></i> Причина возврата
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="mb-0">{{ return_obj.reason }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Боковая панель с действиями -->
-        <div class="col-lg-4">
-            <!-- Статус и маршрут -->
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">Статус обработки</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="text-muted small">Текущий статус</label>
-                        <p class="mb-0">{{ return_obj.get_status_label() }}</p>
-                    </div>
-                    {% if return_obj.processed_by %}
-                    <div class="mb-3">
-                        <label class="text-muted small">Обработал</label>
-                        <p class="mb-0">User ID: {{ return_obj.processed_by }}</p>
-                    </div>
+                    <p class="fw-bold mb-1">{{ return_obj.product_name }}</p>
+                    <p class="mb-2">Артикул: {{ return_obj.product_article or '—' }}</p>
+                    <p class="h5 text-success mb-0">{{ "%.2f"|format(return_obj.amount) }} ₽</p>
+                    {% if return_obj.product_disposition %}
+                    <p class="mt-2 mb-0 small">
+                        <strong>После возврата:</strong>
+                        {% if return_obj.product_disposition == 'warehouse' %}Вернуть на склад{% else %}Списать в брак{% endif %}
+                    </p>
                     {% endif %}
-                    <div>
-                        <label class="text-muted small">Синхронизация с 1С</label>
-                        <p class="mb-0">
-                            {% if return_obj.one_c_sync %}
-                                <span class="text-success">
-                                    <i class="bi bi-check-circle"></i> Синхронизировано
-                                </span>
-                            {% else %}
-                                <span class="text-muted">Не синхронизировано</span>
-                            {% endif %}
-                        </p>
-                    </div>
                 </div>
             </div>
 
-            <!-- Кнопки действий (если есть права) -->
-            {% if can_approve and return_obj.status == 'new' %}
-            <div class="card mb-4 shadow-sm border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Действия</h5>
-                </div>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Причина</h5></div>
                 <div class="card-body">
-                    <form id="approvalForm">
-                        <div class="mb-3">
-                            <label for="comment" class="form-label">Комментарий</label>
-                            <textarea class="form-control" id="comment" rows="2" 
-                                      placeholder="Необязательно"></textarea>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-success" 
-                                    onclick="approveReturn('full')">
-                                <i class="bi bi-check-lg"></i> Согласовать полный возврат
-                            </button>
-                            <button type="button" class="btn btn-warning" 
-                                    onclick="approveReturn('partial')">
-                                <i class="bi bi-cash-coin"></i> Частичный возврат
-                            </button>
-                            <button type="button" class="btn btn-danger" 
-                                    onclick="rejectReturn()">
-                                <i class="bi bi-x-lg"></i> Отклонить
-                            </button>
-                        </div>
-                    </form>
+                    {% if return_reason_label %}
+                    <p class="mb-1"><span class="badge bg-light text-dark border">{{ return_reason_label }}</span></p>
+                    {% endif %}
+                    <p class="mb-0" style="white-space: pre-wrap;">{{ return_obj.reason }}</p>
                 </div>
             </div>
-            {% elif not can_approve and return_obj.status == 'new' %}
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i> 
-                <small>Согласование доступно только менеджеру. Обратитесь к менеджеру.</small>
+
+            {% if return_obj.get_attachment_list() %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-images"></i> Вложения клиента</h5></div>
+                <div class="card-body d-flex flex-wrap gap-2">
+                    {% for fn in return_obj.get_attachment_list() %}
+                    <a href="{{ url_for('main.serve_return_upload', filename=fn) }}" target="_blank" class="btn btn-sm btn-outline-secondary">{{ fn }}</a>
+                    {% endfor %}
+                </div>
             </div>
             {% endif %}
 
-            <!-- История изменений -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">История</h5>
-                </div>
+            {% if return_obj.return_instructions %}
+            <div class="card mb-4 shadow-sm border-success">
+                <div class="card-header bg-success text-white"><h5 class="mb-0">Инструкция для клиента</h5></div>
+                <div class="card-body"><pre class="mb-0" style="white-space: pre-wrap;">{{ return_obj.return_instructions }}</pre></div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white"><h5 class="mb-0">Статус</h5></div>
                 <div class="card-body">
-                    <ul class="list-unstyled mb-0 small">
-                        <li class="mb-2">
-                            <i class="bi bi-plus-circle text-success"></i>
-                            <strong>Создана заявка</strong>
-                            <br><span class="text-muted">
-                                {{ return_obj.created_at.strftime('%d.%m.%Y %H:%M') }}
-                            </span>
-                        </li>
+                    <p class="mb-2">{{ return_obj.get_status_label() }}</p>
+                    {% if return_obj.processed_by %}
+                    <p class="small text-muted mb-0">Обработал пользователь #{{ return_obj.processed_by }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if can_process and return_obj.status in ['new', 'awaiting_seller'] %}
+            <div class="card mb-4 shadow-sm border-primary">
+                <div class="card-header bg-primary text-white"><h5 class="mb-0">Решение</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Комментарий (при одобрении — необязательно)</label>
+                        <textarea class="form-control" id="comment" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Причина отказа (из справочника)</label>
+                        <select class="form-select" id="rejection_code">
+                            <option value="">— выберите при отклонении —</option>
+                            {% for code, title in rejection_reasons %}
+                            <option value="{{ code }}">{{ title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success" onclick="approveReturn()"><i class="bi bi-check-lg"></i> Одобрить</button>
+                        <button type="button" class="btn btn-danger" onclick="rejectReturn()"><i class="bi bi-x-lg"></i> Отклонить</button>
+                    </div>
+                </div>
+            </div>
+            {% elif not can_process and return_obj.status in ['new', 'awaiting_seller'] %}
+            <div class="alert alert-info small">
+                {% if return_obj.status == 'awaiting_seller' %}
+                Решение по клиентской заявке доступно продавцу или менеджеру.
+                {% else %}
+                Согласование внутренней заявки доступно менеджеру.
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h5 class="mb-0">История</h5></div>
+                <div class="card-body small">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="bi bi-plus-circle text-success"></i> Создана {{ return_obj.created_at.strftime('%d.%m.%Y %H:%M') }}</li>
                         {% if return_obj.updated_at != return_obj.created_at %}
-                        <li>
-                            <i class="bi bi-pencil text-primary"></i>
-                            <strong>Обновлено</strong>
-                            <br><span class="text-muted">
-                                {{ return_obj.updated_at.strftime('%d.%m.%Y %H:%M') }}
-                            </span>
-                        </li>
+                        <li><i class="bi bi-pencil text-primary"></i> Обновлено {{ return_obj.updated_at.strftime('%d.%m.%Y %H:%M') }}</li>
                         {% endif %}
                     </ul>
                 </div>
@@ -239,68 +171,40 @@
 
 {% block extra_js %}
 <script>
-// Функция согласования возврата
-function approveReturn(type) {
+function approveReturn() {
     const comment = document.getElementById('comment').value;
     const returnId = {{ return_obj.id }};
-    
-    if (confirm('Подтвердить возврат?')) {
-        fetch(`/api/returns/${returnId}/approve`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                type: type,
-                comment: comment
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert('Возврат согласован!');
-                location.reload();
-            } else {
-                alert('Ошибка: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Произошла ошибка при согласовании');
-        });
-    }
+    if (!confirm('Одобрить возврат? Клиент получит инструкцию (уведомление в системе).')) return;
+    fetch(`/api/returns/${returnId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment: comment })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.message) { alert('Одобрено'); location.reload(); }
+        else { alert('Ошибка: ' + (data.error || '')); }
+    })
+    .catch(() => alert('Ошибка запроса'));
 }
 
-// Функция отклонения возврата
 function rejectReturn() {
+    const code = document.getElementById('rejection_code').value;
     const comment = document.getElementById('comment').value;
     const returnId = {{ return_obj.id }};
-    
-    if (!comment) {
-        alert('Пожалуйста, укажите причину отклонения');
-        return;
-    }
-    
-    if (confirm('Отклонить возврат?')) {
-        fetch(`/api/returns/${returnId}/reject`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ reason: comment })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert('Возврат отклонен');
-                location.reload();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Произошла ошибка');
-        });
-    }
+    if (!code) { alert('Выберите причину отказа из справочника'); return; }
+    if (!confirm('Отклонить возврат?')) return;
+    fetch(`/api/returns/${returnId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rejection_reason_code: code, comment: comment })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.message) { alert('Отклонено'); location.reload(); }
+        else { alert('Ошибка: ' + (data.error || '')); }
+    })
+    .catch(() => alert('Ошибка запроса'));
 }
 </script>
 {% endblock %}

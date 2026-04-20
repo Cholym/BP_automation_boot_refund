@@ -44,6 +44,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.order_list') }}">
+                            <i class="bi bi-bag"></i> Заказы
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.return_list') }}">
                             <i class="bi bi-list-ul"></i> Все возвраты
                         </a>
@@ -51,6 +56,16 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.create_return') }}">
                             <i class="bi bi-plus-circle"></i> Новый возврат
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.notification_list') }}">
+                            <i class="bi bi-bell"></i> Уведомления
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.audit_log_list') }}">
+                            <i class="bi bi-journal-text"></i> Аудит
                         </a>
                     </li>
                 </ul>

@@ -37,36 +37,44 @@
         <h1 class="h3 mb-4">Панель управления возвратами</h1>
 
         <!-- Карточки статистики -->
-        <div class="row mb-4">
-            <div class="col-md-3">
+        <div class="row mb-4 g-3">
+            <div class="col-md-4 col-lg-2">
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Всего возвратов</h5>
-                        <h2 class="display-4">{{ stats.total }}</h2>
+                        <h6 class="card-title">Всего</h6>
+                        <h2 class="h1">{{ stats.total }}</h2>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4 col-lg-2">
                 <div class="card bg-warning text-dark h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Новые заявки</h5>
-                        <h2 class="display-4">{{ stats.new }}</h2>
+                        <h6 class="card-title">Новые</h6>
+                        <h2 class="h1">{{ stats.new }}</h2>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4 col-lg-2">
+                <div class="card bg-info text-dark h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">Ждут продавца</h6>
+                        <h2 class="h1">{{ stats.awaiting_seller }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
                 <div class="card bg-success text-white h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Согласовано</h5>
-                        <h2 class="display-4">{{ stats.approved }}</h2>
+                        <h6 class="card-title">Одобрено</h6>
+                        <h2 class="h1">{{ stats.approved }}</h2>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4 col-lg-2">
                 <div class="card bg-danger text-white h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Отклонено</h5>
-                        <h2 class="display-4">{{ stats.rejected }}</h2>
+                        <h6 class="card-title">Отклонено</h6>
+                        <h2 class="h1">{{ stats.rejected }}</h2>
                     </div>
                 </div>
             </div>
@@ -98,12 +106,13 @@
 
         <!-- Кнопки действий -->
         <div class="mb-4">
-            <a href="{{ url_for('main.create_return') }}" 
-               class="btn btn-primary btn-lg">
-                ➕ Создать заявку на возврат
+            <a href="{{ url_for('main.order_list') }}" class="btn btn-outline-primary btn-lg">
+                Заказы → возврат
             </a>
-            <a href="{{ url_for('main.return_list') }}" 
-               class="btn btn-outline-secondary btn-lg ms-2">
+            <a href="{{ url_for('main.create_return') }}" class="btn btn-primary btn-lg ms-2">
+                ➕ Новый возврат
+            </a>
+            <a href="{{ url_for('main.return_list') }}" class="btn btn-outline-secondary btn-lg ms-2">
                 📋 Все возвраты
             </a>
         </div>
@@ -138,7 +147,8 @@
                                 <td>{{ "%.2f"|format(return_obj.amount) }} ₽</td>
                                 <td>
                                     <span class="badge 
-                                        {% if return_obj.status == 'new' %}bg-warning
+                                        {% if return_obj.status == 'new' %}bg-warning text-dark
+                                        {% elif return_obj.status == 'awaiting_seller' %}bg-info text-dark
                                         {% elif return_obj.status == 'approved' %}bg-success
                                         {% elif return_obj.status == 'rejected' %}bg-danger
                                         {% else %}bg-secondary{% endif %}">

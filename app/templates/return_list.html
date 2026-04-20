@@ -36,8 +36,11 @@
                         <option value="checking" {% if current_filter == 'checking' %}selected{% endif %}>
                             На проверке
                         </option>
+                        <option value="awaiting_seller" {% if current_filter == 'awaiting_seller' %}selected{% endif %}>
+                            Ожидает решения продавца
+                        </option>
                         <option value="approved" {% if current_filter == 'approved' %}selected{% endif %}>
-                            Согласовано
+                            Одобрено
                         </option>
                         <option value="rejected" {% if current_filter == 'rejected' %}selected{% endif %}>
                             Отклонено
@@ -98,6 +101,10 @@
                                 {% elif return_obj.status == 'checking' %}
                                     <span class="badge bg-info">
                                         <i class="bi bi-search"></i> Проверка
+                                    </span>
+                                {% elif return_obj.status == 'awaiting_seller' %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-hourglass-split"></i> Ожидает продавца
                                     </span>
                                 {% elif return_obj.status == 'approved' %}
                                     <span class="badge bg-success">

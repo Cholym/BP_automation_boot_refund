@@ -17,10 +17,11 @@ class ReturnBusinessLogic:
     Назначение: Реализация бизнес-правил обработки возвратов.
 
     Правила:
-        1. Возврат ≤ 500 ₽ согласуется автоматически после создания заявки.
-        2. Ручное согласование — только менеджер (сумма > 500 ₽).
-        3. Возврат возможен в течение 14 дней с момента покупки.
-        4. Товар должен сохранить товарный вид.
+        1. Возврат ≤ 500 ₽ от сотрудника согласуется автоматически.
+        2. Клиентские заявки не автосогласуются; > 500 ₽ требуют вложений (фото).
+        3. Ручное согласование внутренних заявок — менеджер (сумма > 500 ₽).
+        4. Решение по клиентским заявкам — продавец / менеджер.
+        5. Возврат в течение 14 дней с покупки (для оформления продавцом).
     """
 
     AUTO_APPROVE_MAX_AMOUNT = 500  # Автовозврат без ручного согласования
@@ -60,22 +61,19 @@ class ReturnBusinessLogic:
         return 'manager'
 
     @staticmethod
-    def try_auto_approve(return_obj, submitted_by_user_id):
+    def is_staff_auto_approve(return_obj):
         """
-        Функция: try_auto_approve
-        Назначение: Автоматическое согласование при сумме не выше
-            AUTO_APPROVE_MAX_AMOUNT.
+        Функция: is_staff_auto_approve
+        Назначение: Проверка, подлежит ли заявка сотрудника автосогласованию (≤ 500 ₽).
         Параметры:
             return_obj (Return): Заявка на возврат.
-            submitted_by_user_id (int): Идентификатор пользователя, создавшего заявку.
         Возвращает:
-            bool: True, если статус выставлен в «согласовано».
+            bool: True, если можно применить автосогласование.
         """
-        if return_obj.amount <= ReturnBusinessLogic.AUTO_APPROVE_MAX_AMOUNT:
-            return_obj.status = Return.STATUS_APPROVED
-            return_obj.processed_by = submitted_by_user_id
-            return True
-        return False
+        return (
+            return_obj.source == Return.SOURCE_STAFF
+            and return_obj.amount <= ReturnBusinessLogic.AUTO_APPROVE_MAX_AMOUNT
+        )
 
     @staticmethod
     def calculate_refund_amount(return_obj, deduction_percent=0):
@@ -104,6 +102,8 @@ class ReturnBusinessLogic:
         """
         total = Return.query.count()
         new_count = Return.query.filter_by(status=Return.STATUS_NEW).count()
+        awaiting = Return.query.filter_by(
+            status=Return.STATUS_AWAITING_SELLER).count()
         approved_count = Return.query.filter_by(
             status=Return.STATUS_APPROVED).count()
         rejected_count = Return.query.filter_by(
@@ -119,6 +119,7 @@ class ReturnBusinessLogic:
         return {
             'total': total,
             'new': new_count,
+            'awaiting_seller': awaiting,
             'approved': approved_count,
             'rejected': rejected_count,
             'total_amount': total_amount,

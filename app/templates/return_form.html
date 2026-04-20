@@ -1,143 +1,124 @@
 <!--
 Модуль: return_form.html
-Назначение: Форма создания заявки на возврат.
+Назначение: Форма создания заявки на возврат (продавец).
 Автор: Чабанова О.В.
 Группа: ПИБД-2206в
 Дата: 2026
 -->
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Создание заявки на возврат</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
-          rel="stylesheet">
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
-                ← Назад к панели
-            </a>
-        </div>
+{% extends "base.html" %}
+
+{% block title %}Новая заявка на возврат{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Панель</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.order_list') }}">Заказы</a></li>
+            <li class="breadcrumb-item active">Новый возврат</li>
+        </ol>
     </nav>
 
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow">
-                    <div class="card-header bg-white">
-                        <h3 class="mb-0">📝 Новая заявка на возврат</h3>
-                    </div>
-                    <div class="card-body">
-                        {% if error %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ error }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h3 class="mb-0"><i class="bi bi-file-earmark-plus"></i> Заявка на возврат (продавец)</h3>
+                    {% if prefilled %}
+                    <small class="text-success">Данные подставлены из заказа {{ prefilled.order_id }}</small>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('main.create_return') }}">
+                        <h5 class="text-primary">Покупка</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">№ чека / заказа *</label>
+                                <input type="text" name="order_id" class="form-control" required
+                                       value="{{ prefilled.order_id if prefilled else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Дата покупки *</label>
+                                <input type="date" name="purchase_date" class="form-control" required
+                                       value="{{ prefilled.purchase_date.isoformat() if prefilled else '' }}">
+                            </div>
                         </div>
-                        {% endif %}
 
-                        <form method="POST" action="{{ url_for('main.create_return') }}">
-                            <!-- Информация о покупке -->
-                            <h5 class="mb-3 text-primary">Информация о покупке</h5>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="order_id" class="form-label">
-                                        № Чека/Заказа *
-                                    </label>
-                                    <input type="text" class="form-control" 
-                                           id="order_id" name="order_id" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="purchase_date" class="form-label">
-                                        Дата покупки *
-                                    </label>
-                                    <input type="date" class="form-control" 
-                                           id="purchase_date" name="purchase_date" required>
-                                </div>
+                        <h5 class="text-primary mt-3">Клиент</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">ФИО *</label>
+                                <input type="text" name="customer_name" class="form-control" required
+                                       value="{{ prefilled.customer_name if prefilled else '' }}">
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Телефон</label>
+                                <input type="tel" name="customer_phone" class="form-control"
+                                       value="{{ prefilled.customer_phone if prefilled else '' }}">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">E-mail клиента</label>
+                            <input type="email" name="customer_email" class="form-control"
+                                   value="{{ prefilled.customer_email if prefilled else '' }}"
+                                   placeholder="для уведомлений">
+                        </div>
 
-                            <!-- Информация о клиенте -->
-                            <h5 class="mb-3 text-primary mt-4">Информация о клиенте</h5>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="customer_name" class="form-label">
-                                        ФИО клиента *
-                                    </label>
-                                    <input type="text" class="form-control" 
-                                           id="customer_name" name="customer_name" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="customer_phone" class="form-label">
-                                        Телефон
-                                    </label>
-                                    <input type="tel" class="form-control" 
-                                           id="customer_phone" name="customer_phone"
-                                           placeholder="+7 (___) ___-__-__">
-                                </div>
+                        <h5 class="text-primary mt-3">Товар</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Наименование *</label>
+                                <input type="text" name="product_name" class="form-control" required
+                                       value="{{ prefilled.product_name if prefilled else '' }}">
                             </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Артикул</label>
+                                <input type="text" name="product_article" class="form-control"
+                                       value="{{ prefilled.product_article if prefilled else '' }}">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Сумма возврата (₽) *</label>
+                            <input type="number" name="amount" class="form-control" step="0.01" min="0" required
+                                   value="{{ prefilled.amount if prefilled else '' }}">
+                            <div class="form-text">До 500 ₽ — автоматическое одобрение для заявки продавца; свыше — менеджер.</div>
+                        </div>
 
-                            <!-- Информация о товаре -->
-                            <h5 class="mb-3 text-primary mt-4">Информация о товаре</h5>
-                            <div class="row mb-3">
-                                <div class="col-md-8">
-                                    <label for="product_name" class="form-label">
-                                        Наименование товара *
-                                    </label>
-                                    <input type="text" class="form-control" 
-                                           id="product_name" name="product_name" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="product_article" class="form-label">
-                                        Артикул
-                                    </label>
-                                    <input type="text" class="form-control" 
-                                           id="product_article" name="product_article">
-                                </div>
-                            </div>
+                        <h5 class="text-primary mt-3">Причина и дальнейшее использование товара</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Причина из справочника *</label>
+                            <select name="reason_code" class="form-select" required>
+                                {% for code, title in reasons %}
+                                <option value="{{ code }}">{{ title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Уточнение («Другое» и др.)</label>
+                            <textarea name="reason_other" class="form-control" rows="2"
+                                      placeholder="Обязательно при выборе «Другое»"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Статус товара после возврата *</label>
+                            <select name="product_disposition" class="form-select" required>
+                                <option value="warehouse">Вернуть на склад</option>
+                                <option value="defect_writeoff">Списать в брак</option>
+                            </select>
+                        </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="amount" class="form-label">
-                                        Сумма возврата (₽) *
-                                    </label>
-                                    <input type="number" class="form-control" 
-                                           id="amount" name="amount" 
-                                           step="0.01" min="0" required>
-                                    <div class="form-text">
-                                        До 500 ₽ — автоматическое согласование;
-                                        свыше — согласование менеджером
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Причина возврата -->
-                            <div class="mb-3">
-                                <label for="reason" class="form-label">
-                                    Причина возврата *
-                                </label>
-                                <textarea class="form-control" id="reason" name="reason" 
-                                          rows="3" required></textarea>
-                            </div>
-
-                            <!-- Кнопки действий -->
-                            <div class="d-flex justify-content-between mt-4">
-                                <button type="reset" class="btn btn-outline-secondary">
-                                    Очистить
-                                </button>
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    Создать заявку
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('main.order_list') }}" class="btn btn-outline-secondary">К заказам</a>
+                            <button type="submit" class="btn btn-primary btn-lg">Создать заявку</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

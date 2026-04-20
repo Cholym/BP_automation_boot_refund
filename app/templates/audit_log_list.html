@@ -1,0 +1,36 @@
+<!--
+Модуль: audit_log_list.html
+Назначение: Журнал аудита.
+Автор: Чабанова О.В.
+Группа: ПИБД-2206в
+Дата: 2026
+-->
+
+{% extends "base.html" %}
+
+{% block title %}Журнал аудита{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="h4 mb-4">Журнал аудита</h1>
+    <div class="table-responsive card">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Время</th><th>Действие</th><th>Сущность</th><th>ID</th><th>Пользователь</th><th>Детали</th></tr></thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td class="text-nowrap small">{{ r.created_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td><code>{{ r.action }}</code></td>
+                    <td>{{ r.entity_type }}</td>
+                    <td>{{ r.entity_id }}</td>
+                    <td>{{ r.user_id if r.user_id is not none else '—' }}</td>
+                    <td class="small text-break">{{ r.details or '' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-muted">Записей нет</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

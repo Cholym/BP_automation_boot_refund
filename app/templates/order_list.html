@@ -1,0 +1,77 @@
+<!--
+Модуль: order_list.html
+Назначение: История заказов с поиском и переходом к возврату.
+Автор: Чабанова О.В.
+Группа: ПИБД-2206в
+Дата: 2026
+-->
+
+{% extends "base.html" %}
+
+{% block title %}Заказы{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="h3 mb-4"><i class="bi bi-bag"></i> История заказов</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Поиск</label>
+                    <input type="text" name="q" class="form-control" placeholder="№ заказа, клиент, телефон, товар"
+                           value="{{ q }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Статус заказа</label>
+                    <select name="status" class="form-select">
+                        <option value="">Все</option>
+                        <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Завершён</option>
+                        <option value="delivered" {% if current_status == 'delivered' %}selected{% endif %}>Доставлен</option>
+                        <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Отменён</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Найти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive card">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Заказ</th>
+                    <th>Дата покупки</th>
+                    <th>Клиент</th>
+                    <th>Товар</th>
+                    <th>Сумма</th>
+                    <th>Статус</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td class="fw-bold">{{ o.order_id }}</td>
+                    <td>{{ o.purchase_date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ o.customer_name }}<br><small class="text-muted">{{ o.customer_phone or '' }}</small></td>
+                    <td>{{ o.product_name }}</td>
+                    <td>{{ "%.2f"|format(o.amount) }} ₽</td>
+                    <td><span class="badge bg-secondary">{{ o.order_status }}</span></td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary"
+                           href="{{ url_for('main.create_return', order_id=o.order_id) }}">
+                            Оформить возврат
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-4">Заказы не найдены</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+<!--
+Модуль: notification_list.html
+Назначение: Просмотр сформированных уведомлений (демо без реальной почты).
+Автор: Чабанова О.В.
+Группа: ПИБД-2206в
+Дата: 2026
+-->
+
+{% extends "base.html" %}
+
+{% block title %}Уведомления{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="h4 mb-4">Уведомления и сообщения клиентам</h1>
+    <p class="text-muted small">В учебном проекте письма не отправляются: текст сохраняется в БД (таблица <code>notifications</code>).</p>
+    <div class="list-group">
+        {% for n in items %}
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between">
+                <strong>{{ n.subject }}</strong>
+                <small class="text-muted">{{ n.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+            </div>
+            <div class="small text-muted">Кому: {{ n.recipient }} · {{ n.audience }}{% if n.return_id %} · возврат #{{ n.return_id }}{% endif %}</div>
+            <pre class="small mb-0 mt-2" style="white-space: pre-wrap;">{{ n.body }}</pre>
+        </div>
+        {% else %}
+        <p class="text-muted">Пока нет записей. Одобрите или отклоните заявку — появятся тексты уведомлений.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

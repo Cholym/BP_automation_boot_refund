@@ -54,9 +54,14 @@ def create_app(config_name=None):
     db.init_app(app)
     login_manager.init_app(app)
 
-    from app.routes import api, main
+    upload_dir = app.config.get("UPLOAD_FOLDER")
+    if upload_dir:
+        os.makedirs(upload_dir, exist_ok=True)
+
+    from app.routes import api, main, public
 
     app.register_blueprint(main)
     app.register_blueprint(api)
+    app.register_blueprint(public)
 
     return app
